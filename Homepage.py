@@ -30,76 +30,34 @@ if 'code' in redirect_response:
 
         st.write("Authentication successful! Access token received.")
 
-        # Extract the access token
         access_token = token['access_token']
-        st.write(f"Access Token: {access_token}")  # Debugging step
+        expires_in = token.get('expires_in', 'Unknown')
+        st.write(f"Access Token: {access_token}")
+        st.write(f"Token Expires In: {expires_in} seconds")
 
-        # Use your league key here
         league_key = 'nfl.l.650587'
         headers = {
             'Authorization': f'Bearer {access_token}',
-            'Accept': 'application/json',  # Explicitly request JSON format
+            'Accept': 'application/json',
         }
 
-        # Debugging: Check API request URL and headers
         st.write(f"League URL: https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams")
         st.write(f"Headers: {headers}")
 
-        # Fetch Teams in the League
         teams_url = f'https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams'
         teams_response = requests.get(teams_url, headers=headers)
 
-        # Debugging: Check the status code and response text
         st.write(f"Teams API Response Status Code: {teams_response.status_code}")
         st.write(f"Teams API Response Text: {teams_response.text}")
 
         if teams_response.status_code == 200:
             try:
-                teams_data = teams_response.json()  # Parse JSON
+                teams_data = teams_response.json()
                 st.write("Teams Data:", teams_data)
-                
-                # Find your team based on team name ("The Alli Show")
-                my_team = None
-                for team in teams_data['fantasy_content']['league'][1]['teams']:
-                    team_key = team['team'][0][0]['team_key']
-                    team_name = team['team'][0][2]['name']
-                    
-                    st.write(f"Found Team: {team_name}")
-                    
-                    if team_name == "The Alli Show":
-                        my_team = team_key
-                        st.write(f"This is your team: {team_name}")
-                        break
-
-                if my_team:
-                    # Fetch your team's roster
-                    roster_url = f'https://fantasysports.yahooapis.com/fantasy/v2/team/{my_team}/roster'
-                    roster_response = requests.get(roster_url, headers=headers)
-
-                    # Debugging: Check the status code and response text for roster
-                    st.write(f"Roster API Response Status Code: {roster_response.status_code}")
-                    st.write(f"Roster API Response Text: {roster_response.text}")
-
-                    if roster_response.status_code == 200:
-                        roster_data = roster_response.json()
-                        st.write(f"Your Team Roster:", roster_data)
-                        
-                        # Example: List players in your roster
-                        players = []
-                        for player in roster_data['fantasy_content']['team'][1]['roster']['0']['players']:
-                            player_name = player['player'][0][2]['name']['full']
-                            position = player['player'][0][1]['primary_position']
-                            players.append({'Name': player_name, 'Position': position})
-                        
-                        st.write(players)
-
-                else:
-                    st.write("Your team was not found in the league data.")
-
             except ValueError:
                 st.write("Error: Unable to parse JSON response.")
         else:
-            st.write(f"Error fetching teams data: {teams_response.status_code}")
+            st.write(f"Error fetching teams data: {teams_response.status_code} - {teams_response.text}")
 
     except Exception as e:
         st.write(f"Error fetching access token: {e}")
