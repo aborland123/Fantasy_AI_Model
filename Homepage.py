@@ -51,7 +51,6 @@ if 'code' in redirect_response:
 
         if teams_response.status_code == 200:
             try:
-                # Parse the XML content
                 root = ET.fromstring(teams_response.content)
                 
                 # Find all 'team' elements
@@ -59,9 +58,9 @@ if 'code' in redirect_response:
                 team_list = []
 
                 for team in teams:
-                    team_name = team.find('name').text if team.find('name') is not None else "N/A"
-                    team_key = team.find('team_key').text if team.find('team_key') is not None else "N/A"
-                    manager = team.find('managers/manager/nickname').text if team.find('managers/manager/nickname') is not None else "N/A"
+                    team_name = team.find('./name').text if team.find('./name') is not None else "N/A"
+                    team_key = team.find('./team_key').text if team.find('./team_key') is not None else "N/A"
+                    manager = team.find('.//manager/nickname').text if team.find('.//manager/nickname') is not None else "N/A"
                     team_list.append({
                         'Team Name': team_name,
                         'Team Key': team_key,
