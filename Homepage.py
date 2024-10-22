@@ -12,56 +12,58 @@ redirect_uri = 'https://fantasyfootballai.streamlit.app/'
 
 st.title('Fantasy Football AI')
 
+
 authorization_base_url = 'https://api.login.yahoo.com/oauth2/request_auth'
 token_url = 'https://api.login.yahoo.com/oauth2/get_token'
 
+# Yahoo OAuth2 Session
 yahoo = OAuth2Session(client_id, redirect_uri=redirect_uri)
 
+# Generate authorization URL
 authorization_url, state = yahoo.authorization_url(authorization_base_url)
 st.write(f"Please go to [this link]({authorization_url}) to authorize access.")
 
+# Fetch token and make a request to the API
 redirect_response = st.query_params
-
 if 'code' in redirect_response:
-    code = redirect_response['code']
-    authorization_code = code[0] if isinstance(code, list) else code
-
+    authorization_code = redirect_response.get('code')
     try:
-        token = yahoo.fetch_token(token_url, client_secret=client_secret,
-                                  code=authorization_code, include_client_id=True)
-
+        token = yahoo.fetch_token(token_url, client_secret=client_secret, code=authorization_code, include_client_id=True)
         st.write("Authentication successful! Access token received.")
 
-        access_token = token['access_token']
-        expires_in = token.get('expires_in', 'Unknown')
-        st.write(f"Access Token: {access_token}")
-        st.write(f"Token Expires In: {expires_in} seconds")
+        # Make a request to the Yahoo Fantasy Sports API
+        headers = {'Authorization': f"Bearer {token['access_token']}", 'Accept': 'application/json'}
+        response = requests.get('https://fantasysports.yahooapis.com/fantasy/v2/league/nfl.l.650587/teams', headers=headers)
 
-        league_key = 'nfl.l.650587'
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Accept': 'application/json',
-        }
+        if response.status_code == 200:
+            st.write(f"Teams API Response Status Code: {response.status_code}")
+            root = ET.fromstring(response.content)
 
-        teams_url = f'https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams'
-        teams_response = requests.get(teams_url, headers=headers)
+            # Extract relevant data
+            teams_data = []
+            for team in root.findall('.//team'):
+                team_key = team.find('.//team_key').text
+                team_name = team.find('.//name').text
+                waiver_priority = team.find('.//waiver_priority').text
+                num_moves = team.find('.//number_of_moves').text
+                draft_grade = team.find('.//draft_grade').text if team.find('.//draft_grade') is not None else "N/A"
 
-        st.write(f"Teams API Response Status Code: {teams_response.status_code}")
-        st.write(f"Teams API Response Text: {teams_response.text}")
+                teams_data.append([team_key, team_name, waiver_priority, num_moves, draft_grade])
 
-        if teams_response.status_code == 200:
-            try:
-                root = ET.fromstring(teams_response.content)
+            # Create a DataFrame
+            df = pd.DataFrame(teams_data, columns=['Team Key', 'Team Name', 'Waiver Priority', 'Number of Moves', 'Draft Grade'])
 
-                # Print the entire XML structure to inspect
-                for elem in root.iter():
-                    st.write(elem.tag, elem.text)
+            # Export to CSV
+            csv_filename = '/mnt/data/fantasy_teams.csv'
+            df.to_csv(csv_filename, index=False)
+            st.write(f"Data exported successfully to CSV: {csv_filename}")
 
-                # Add your logic for extracting team information once structure is verified
-            except ET.ParseError as e:
-                st.write(f"Error parsing XML response: {e}")
+            # Display DataFrame
+            st.write("Team Data:")
+            st.dataframe(df)
+            
         else:
-            st.write(f"Error fetching teams data: {teams_response.status_code} - {teams_response.text}")
+            st.write(f"Error: {response.status_code}")
 
     except Exception as e:
         st.write(f"Error fetching access token: {e}")
