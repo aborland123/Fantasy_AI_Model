@@ -17,14 +17,14 @@ yahoo = OAuth2Session(client_id, redirect_uri=redirect_uri)
 
 authorization_url, state = yahoo.authorization_url(authorization_base_url)
 st.write(f"Please go to [this link]({authorization_url}) to authorize access.")
+st.write(f"Authorization URL: {authorization_url}")  # Debugging
 
 redirect_response = st.query_params
 
 st.write("Query Params:", redirect_response)
 
 if 'code' in redirect_response:
-    code = redirect_response['code'] 
-    
+    code = redirect_response['code']
     if isinstance(code, list):
         authorization_code = code[0]
     else:
