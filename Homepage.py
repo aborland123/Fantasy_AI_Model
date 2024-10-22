@@ -30,19 +30,33 @@ if 'code' in redirect_response:
 
         st.write("Authentication successful! Access token received.")
 
+        # Extract the access token
         access_token = token['access_token']
+        st.write(f"Access Token: {access_token}")  # Debugging step
 
+        # Use your league key here
         league_key = 'nfl.l.650587'
         headers = {
             'Authorization': f'Bearer {access_token}',
         }
 
+        # Debugging: Check API request URL and headers
+        st.write(f"League URL: https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams")
+        st.write(f"Headers: {headers}")
+
+        # Fetch Teams in the League
         teams_url = f'https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams'
         teams_response = requests.get(teams_url, headers=headers)
+
+        # Debugging: Check the status code and response text
+        st.write(f"Teams API Response Status Code: {teams_response.status_code}")
+        st.write(f"Teams API Response Text: {teams_response.text}")
+
         if teams_response.status_code == 200:
             teams_data = teams_response.json()
             st.write("Teams Data:", teams_data)
             
+            # Find your team based on team name ("The Alli Show")
             my_team = None
             for team in teams_data['fantasy_content']['league'][1]['teams']:
                 team_key = team['team'][0][0]['team_key']
@@ -56,12 +70,19 @@ if 'code' in redirect_response:
                     break
 
             if my_team:
+                # Fetch your team's roster
                 roster_url = f'https://fantasysports.yahooapis.com/fantasy/v2/team/{my_team}/roster'
                 roster_response = requests.get(roster_url, headers=headers)
+
+                # Debugging: Check the status code and response text for roster
+                st.write(f"Roster API Response Status Code: {roster_response.status_code}")
+                st.write(f"Roster API Response Text: {roster_response.text}")
+
                 if roster_response.status_code == 200:
                     roster_data = roster_response.json()
                     st.write(f"Your Team Roster:", roster_data)
                     
+                    # Example: List players in your roster
                     players = []
                     for player in roster_data['fantasy_content']['team'][1]['roster']['0']['players']:
                         player_name = player['player'][0][2]['name']['full']
