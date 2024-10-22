@@ -8,6 +8,8 @@ client_secret = st.secrets["CLIENT_SECRET"]
 
 redirect_uri = 'https://fantasyfootballai.streamlit.app/'
 
+st.title('Fantasy Football AI')
+
 authorization_base_url = 'https://api.login.yahoo.com/oauth2/request_auth'
 token_url = 'https://api.login.yahoo.com/oauth2/get_token'
 
@@ -21,8 +23,13 @@ redirect_response = st.query_params
 st.write("Query Params:", redirect_response)
 
 if 'code' in redirect_response:
-    code = redirect_response['code']
-    authorization_code = code[0]
+    code = redirect_response['code'] 
+    
+    if isinstance(code, list):
+        authorization_code = code[0]
+    else:
+        authorization_code = code
+
     st.write(f"Authorization code received: {authorization_code}")
 
     try:
