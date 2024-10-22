@@ -1,6 +1,8 @@
 import streamlit as st
 from requests_oauthlib import OAuth2Session
 import requests
+import xml.etree.ElementTree as ET
+
 
 # allows me to publish to GitHub without exposing API Key. In Streamlit.
 client_id = st.secrets["CLIENT_ID"]
@@ -9,6 +11,7 @@ client_secret = st.secrets["CLIENT_SECRET"]
 redirect_uri = 'https://fantasyfootballai.streamlit.app/'
 
 st.title('Fantasy Football AI')
+
 
 authorization_base_url = 'https://api.login.yahoo.com/oauth2/request_auth'
 token_url = 'https://api.login.yahoo.com/oauth2/get_token'
@@ -41,9 +44,6 @@ if 'code' in redirect_response:
             'Accept': 'application/json',
         }
 
-        st.write(f"League URL: https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams")
-        st.write(f"Headers: {headers}")
-
         teams_url = f'https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams'
         teams_response = requests.get(teams_url, headers=headers)
 
@@ -52,10 +52,21 @@ if 'code' in redirect_response:
 
         if teams_response.status_code == 200:
             try:
-                teams_data = teams_response.json()
-                st.write("Teams Data:", teams_data)
-            except ValueError:
-                st.write("Error: Unable to parse JSON response.")
+                root = ET.fromstring(teams_response.content)
+                teams = root.findall('.//team')
+                team_list = []
+
+                for team in teams:
+                    team_name = team.find('name').text
+                    team_key = team.find('team_key').text
+                    manager_name = team.find('managers/manager/nickname').text
+                    team_list.append({'Team Name': team_name, 'Manager': manager_name, 'Team Key': team_key})
+
+                st.write("Teams in the League:")
+                st.write(team_list)
+
+            except ET.ParseError as e:
+                st.write(f"Error parsing XML response: {e}")
         else:
             st.write(f"Error fetching teams data: {teams_response.status_code} - {teams_response.text}")
 
