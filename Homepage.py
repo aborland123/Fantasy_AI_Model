@@ -6,7 +6,7 @@ import requests
 client_id = st.secrets["CLIENT_ID"]
 client_secret = st.secrets["CLIENT_SECRET"]
 
-redirect_uri = 'https://fantasyfootballai.streamlit.app'
+redirect_uri = 'https://fantasyfootballai.streamlit.app/'
 
 authorization_base_url = 'https://api.login.yahoo.com/oauth2/request_auth'
 token_url = 'https://api.login.yahoo.com/oauth2/get_token'
