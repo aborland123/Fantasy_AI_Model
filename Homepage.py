@@ -52,24 +52,12 @@ if 'code' in redirect_response:
         if teams_response.status_code == 200:
             try:
                 root = ET.fromstring(teams_response.content)
-                
-                # Find all 'team' elements
-                teams = root.findall('.//team')
-                team_list = []
 
-                for team in teams:
-                    team_name = team.find('./name').text if team.find('./name') is not None else "N/A"
-                    team_key = team.find('./team_key').text if team.find('./team_key') is not None else "N/A"
-                    manager = team.find('.//manager/nickname').text if team.find('.//manager/nickname') is not None else "N/A"
-                    team_list.append({
-                        'Team Name': team_name,
-                        'Team Key': team_key,
-                        'Manager': manager
-                    })
+                # Print the entire XML structure to inspect
+                for elem in root.iter():
+                    st.write(elem.tag, elem.text)
 
-                st.write("Teams in the League:")
-                st.write(team_list)
-
+                # Add your logic for extracting team information once structure is verified
             except ET.ParseError as e:
                 st.write(f"Error parsing XML response: {e}")
         else:
